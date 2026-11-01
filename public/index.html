@@ -5,39 +5,45 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Stop de Palavras</title>
 <meta name="description" content="Jogo de palavras para jogar com os amigos: uma categoria, uma roda de letras e poucos segundos para pensar.">
-<meta name="theme-color" content="#FFD23F">
+<meta name="theme-color" content="#2B66E0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛑</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #FFD23F;
-  --surface: #FFF7DB;
-  --ink: #221D52;
-  --muted: #5E5888;
-  --edge: #221D52;
-  --accent: #4B2BD6;
+  --bg: #2B66E0;
+  --on-bg: #FFFFFF;
+  --on-bg-muted: #D3E1FF;
+  --surface: #EEF4FF;
+  --ink: #0A1A45;
+  --muted: #4A5B8C;
+  --edge: #0A1A45;
+  --accent: #1645B8;
   --accent-ink: #FFFFFF;
   --key: #FFFFFF;
-  --key-used: #E9DCA6;
-  --danger: #E5383B;
+  --key-used: #B7C9F0;
+  --pop: #FFC93C;
+  --pop-ink: #0A1A45;
+  --danger: #D62839;
   --ok: #18915F;
   --font: "Baloo 2", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #1A1740;
-    --surface: #27235C;
-    --ink: #FFF4CC;
-    --muted: #B8B2E8;
-    --edge: #0C0A26;
-    --accent: #FFD23F;
-    --accent-ink: #1A1740;
-    --key: #3A3486;
-    --key-used: #14112F;
-    --danger: #FF5A5F;
+    --bg: #0B1A3F;
+    --on-bg: #EAF2FF;
+    --on-bg-muted: #9DB4E8;
+    --surface: #13285E;
+    --ink: #EAF2FF;
+    --muted: #9DB4E8;
+    --edge: #040B21;
+    --accent: #4C8DFF;
+    --accent-ink: #FFFFFF;
+    --key: #1E3E8A;
+    --key-used: #0A1634;
+    --danger: #FF5A6A;
     --ok: #3DDC97;
     color-scheme: dark;
   }
@@ -57,6 +63,7 @@ h1, h2, p { margin: 0; }
 h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: .6rem; }
 button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.board :focus-visible, .room-head :focus-visible, .reactions :focus-visible { outline-color: var(--pop); }
 
 /* ---------- peças base ---------- */
 .panel {
@@ -79,7 +86,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge); }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
-.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.primary { background: var(--pop); color: var(--pop-ink); border-color: var(--edge); }
 .btn.big { font-size: 1.2rem; padding: .7rem 1.4rem; }
 .btn.link { border: 0; box-shadow: none; background: none; text-decoration: underline; padding: .3rem; font-weight: 600; color: var(--muted); }
 .field { display: grid; gap: .3rem; font-weight: 600; }
@@ -108,9 +115,9 @@ textarea.input { resize: vertical; min-height: 5.5rem; font-weight: 500; }
   font-size: clamp(2.2rem, 11vw, 3.1rem); font-weight: 800; line-height: 1;
   padding-top: .2rem;
 }
-.logo-key:nth-child(2) { transform: translateY(6px); box-shadow: 0 1px 0 var(--edge); background: var(--key-used); }
-.logo-sub { font-size: 1.5rem; font-weight: 700; letter-spacing: .02em; }
-.tagline { text-align: center; color: var(--muted); max-width: 26rem; margin: 0 auto; }
+.logo-key:nth-child(2) { transform: translateY(6px); box-shadow: 0 1px 0 var(--edge); background: var(--pop); color: var(--pop-ink); }
+.logo-sub { color: var(--on-bg); font-size: 1.5rem; font-weight: 700; letter-spacing: .02em; }
+.tagline { text-align: center; color: var(--on-bg-muted); max-width: 26rem; margin: 0 auto; }
 .home form { display: grid; gap: 1rem; }
 .home details summary { cursor: pointer; font-weight: 600; color: var(--muted); }
 .home details .row { margin-top: .6rem; }
@@ -122,7 +129,8 @@ textarea.input { resize: vertical; min-height: 5.5rem; font-weight: 500; }
 /* ---------- sala de espera ---------- */
 .lobby { max-width: 60rem; margin: 0 auto; padding: 1.6rem 1.2rem 3rem; display: grid; gap: 1.4rem; }
 .room-head { display: flex; justify-content: space-between; align-items: end; gap: 1rem; flex-wrap: wrap; }
-.room-code { font-size: 3rem; font-weight: 800; letter-spacing: .12em; line-height: 1; }
+.room-head .muted { color: var(--on-bg-muted); }
+.room-code { color: var(--pop); font-size: 3rem; font-weight: 800; letter-spacing: .12em; line-height: 1; }
 .lobby-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.4rem; align-items: start; }
 .settings { border: 0; padding: 0; margin: 0 0 1.1rem; display: grid; gap: .9rem; }
 .settings .two { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
@@ -136,39 +144,49 @@ textarea.input { resize: vertical; min-height: 5.5rem; font-weight: 500; }
 .plist .name { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .plist .tag { font-size: .85rem; color: var(--muted); font-weight: 600; }
 .plist li.off { opacity: .5; }
-.plist li.current { border-color: var(--accent); }
+.plist li.current { border-color: var(--edge); background: var(--pop); color: var(--pop-ink); }
+.plist li.current .tag { color: var(--pop-ink); }
+.plist li.current .pip.on { background: var(--pop-ink); }
 .plist li.out .name { text-decoration: line-through; color: var(--muted); }
 .pips { display: flex; gap: 3px; flex-wrap: wrap; justify-content: flex-end; max-width: 7rem; }
 .pip { width: .7rem; height: .95rem; border-radius: 3px; border: 2px solid var(--edge); }
-.pip.on { background: var(--accent); }
+.pip.on { background: var(--pop); }
 
 /* ---------- jogo ---------- */
-.game { max-width: 68rem; margin: 0 auto; padding: 1.2rem 1.2rem 3rem; }
+.game { max-width: 84rem; margin: 0 auto; padding: 1.2rem 1.2rem 3rem; }
 .game-head { display: flex; justify-content: center; margin-bottom: 1.4rem; }
 .card {
-  background: var(--surface); border: 3px solid var(--edge); border-radius: 18px;
+  background: var(--pop); color: var(--pop-ink); border: 3px solid var(--edge); border-radius: 18px;
   box-shadow: 0 6px 0 var(--edge);
   padding: .6rem 1.6rem .7rem; text-align: center; transform: rotate(-1.5deg);
   max-width: 100%;
 }
-.card .round-label { font-weight: 600; color: var(--muted); font-size: .95rem; }
+.card .round-label { font-weight: 600; color: var(--pop-ink); opacity: .7; font-size: .95rem; }
 .card .category { font-size: clamp(1.6rem, 5vw, 2.4rem); font-weight: 800; line-height: 1.15; }
-.game-grid { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: 1.6rem; align-items: start; }
+.game-grid {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) minmax(0, 36rem) minmax(14rem, 1fr);
+  grid-template-areas: "left board right";
+  gap: 1.6rem; align-items: start;
+}
+.side-left { grid-area: left; }
+.side-right { grid-area: right; }
+.board { grid-area: board; }
 .board { display: grid; gap: 1rem; justify-items: center; }
 
-.wheel { position: relative; width: min(92vw, 30rem); aspect-ratio: 1; }
+.wheel { position: relative; width: min(94vw, 35rem); aspect-ratio: 1; }
 .wheel::before {
-  content: ""; position: absolute; inset: 6%;
+  content: ""; position: absolute; inset: 3%;
   border-radius: 50%; background: var(--surface); border: 3px solid var(--edge);
   box-shadow: 0 8px 0 var(--edge);
 }
 .key {
-  position: absolute; width: 13%; aspect-ratio: 1;
+  position: absolute; width: 10.5%; aspect-ratio: 1;
   transform: translate(-50%, -50%);
   display: grid; place-items: center;
   background: var(--key); border: 3px solid var(--edge); border-radius: 30%;
   box-shadow: 0 5px 0 var(--edge);
-  font-weight: 800; font-size: clamp(1rem, 4.4vw, 1.55rem); line-height: 1; padding: .15em 0 0;
+  font-weight: 800; font-size: clamp(.95rem, 4vw, 1.5rem); line-height: 1; padding: .15em 0 0;
   cursor: default; transition: transform .08s, box-shadow .08s, background .15s;
 }
 .key.free.mine { cursor: pointer; }
@@ -176,9 +194,9 @@ textarea.input { resize: vertical; min-height: 5.5rem; font-weight: 500; }
   background: var(--key-used); color: var(--muted); opacity: .75;
   transform: translate(-50%, calc(-50% + 4px)); box-shadow: 0 1px 0 var(--edge);
 }
-.key.preview { background: var(--accent); color: var(--accent-ink); }
+.key.preview { background: var(--pop); color: var(--pop-ink); transform: translate(-50%, calc(-50% - 3px)); }
 .key.preview-bad { background: var(--danger); color: #fff; }
-.hub { position: absolute; inset: 24%; display: grid; place-items: center; }
+.hub { position: absolute; inset: 25%; display: grid; place-items: center; }
 .hub svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
 .hub .track { fill: var(--key); stroke: var(--edge); stroke-width: 3; }
 .hub .ring { fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round; transition: stroke .2s; }
@@ -188,7 +206,7 @@ textarea.input { resize: vertical; min-height: 5.5rem; font-weight: 500; }
 .hub.danger .hub-seconds { color: var(--danger); }
 .hub-name { font-weight: 700; font-size: clamp(.85rem, 3vw, 1.05rem); line-height: 1.15; overflow-wrap: anywhere; }
 
-.status { font-size: 1.15rem; font-weight: 700; text-align: center; min-height: 1.6em; }
+.status { color: var(--on-bg); font-size: 1.15rem; font-weight: 700; text-align: center; min-height: 1.6em; }
 .word-form { display: flex; gap: .6rem; width: min(100%, 30rem); }
 .word-form .input { font-size: 1.25rem; }
 .contest, .vote {
@@ -196,13 +214,13 @@ textarea.input { resize: vertical; min-height: 5.5rem; font-weight: 500; }
   padding: .7rem .9rem .9rem; display: grid; gap: .5rem;
 }
 .contest { grid-template-columns: 1fr auto; align-items: center; }
-.contest .bar, .vote .bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--key-used); overflow: hidden; }
-.bar i { display: block; height: 100%; background: var(--accent); width: 100%; }
+.contest .bar, .vote .bar { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: var(--key-used); border: 2px solid var(--edge); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--pop); width: 100%; }
 .vote { border-color: var(--danger); box-shadow: 0 5px 0 var(--danger); }
 .vote-text { font-weight: 700; font-size: 1.1rem; }
 .vote-actions { display: flex; gap: .6rem; }
 .vote-actions .btn { flex: 1; }
-.vote-actions .btn.chosen { background: var(--accent); color: var(--accent-ink); }
+.vote-actions .btn.chosen { background: var(--pop); color: var(--pop-ink); }
 .reactions { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: center; }
 .reactions button {
   font-size: 1.4rem; width: 2.9rem; height: 2.9rem; border-radius: 50%;
@@ -232,7 +250,7 @@ textarea.input { resize: vertical; min-height: 5.5rem; font-weight: 500; }
 /* ---------- avisos e reações ---------- */
 .toasts { position: fixed; left: 50%; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 30; display: grid; gap: .4rem; width: min(92vw, 26rem); pointer-events: none; }
 .toast {
-  background: var(--ink); color: var(--bg); font-weight: 700; padding: .55rem .9rem; border-radius: 12px; text-align: center;
+  background: var(--edge); color: #FFFFFF; border: 2px solid var(--on-bg-muted); font-weight: 700; padding: .55rem .9rem; border-radius: 12px; text-align: center;
   animation: toast-in .2s ease-out;
 }
 @keyframes toast-in { from { transform: translateY(10px); opacity: 0; } }
@@ -242,11 +260,19 @@ textarea.input { resize: vertical; min-height: 5.5rem; font-weight: 500; }
 .floater .n { font-size: .8rem; font-weight: 700; background: var(--surface); border: 2px solid var(--edge); border-radius: 8px; padding: 0 .4rem; }
 @keyframes rise { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(-55vh); opacity: 0; } }
 .mute { position: fixed; top: calc(.8rem + env(safe-area-inset-top, 0px)); right: .8rem; z-index: 15; width: 2.8rem; height: 2.8rem; padding: 0; font-size: 1.2rem; border-radius: 50%; }
+.board .error:not(:empty) { background: var(--surface); border: 2px solid var(--danger); border-radius: 10px; padding: .2rem .8rem; }
 .conn { position: fixed; top: 0; left: 0; right: 0; z-index: 40; background: var(--danger); color: #fff; text-align: center; font-weight: 700; padding: .35rem; }
 
+@media (max-width: 1100px) {
+  .game-grid { grid-template-columns: 1fr 1fr; grid-template-areas: "board board" "left right"; }
+  .board { justify-self: center; width: 100%; max-width: 36rem; }
+}
+@media (max-width: 700px) {
+  .game-grid { grid-template-columns: 1fr; grid-template-areas: "board" "left" "right"; }
+  .key { width: 12%; }
+}
 @media (max-width: 860px) {
-  .game-grid, .lobby-grid { grid-template-columns: 1fr; }
-  .side { order: 2; }
+  .lobby-grid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition: none !important; }
@@ -363,6 +389,14 @@ textarea.input { resize: vertical; min-height: 5.5rem; font-weight: 500; }
   </header>
 
   <div class="game-grid">
+    <aside class="side side-left">
+      <section class="panel">
+        <h2>Placar</h2>
+        <ul id="game-players" class="plist"></ul>
+        <p id="target-label" class="muted" style="margin-top:.6rem"></p>
+      </section>
+    </aside>
+
     <section class="board">
       <div id="wheel" class="wheel">
         <div id="hub" class="hub">
@@ -404,12 +438,7 @@ textarea.input { resize: vertical; min-height: 5.5rem; font-weight: 500; }
       <div class="reactions" id="reactions" aria-label="Reações"></div>
     </section>
 
-    <aside class="side">
-      <section class="panel">
-        <h2>Placar</h2>
-        <ul id="game-players" class="plist"></ul>
-        <p id="target-label" class="muted" style="margin-top:.6rem"></p>
-      </section>
+    <aside class="side side-right">
       <section class="panel">
         <h2>Palavras da rodada</h2>
         <ol id="word-log" class="log"></ol>
@@ -642,8 +671,8 @@ textarea.input { resize: vertical; min-height: 5.5rem; font-weight: 500; }
     letters.forEach((L, i) => {
       const a = (i / letters.length) * Math.PI * 2 - Math.PI / 2;
       const k = el('button', { class: 'key', type: 'button', text: L, 'aria-label': 'Letra ' + L });
-      k.style.left = (50 + 41 * Math.cos(a)) + '%';
-      k.style.top = (50 + 41 * Math.sin(a)) + '%';
+      k.style.left = (50 + 43 * Math.cos(a)) + '%';
+      k.style.top = (50 + 43 * Math.sin(a)) + '%';
       k.addEventListener('click', () => {
         if (!isMyTurn() || (state.round.used[L])) return;
         const input = $('word-input');
