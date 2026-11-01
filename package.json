@@ -1,0 +1,17 @@
+{
+  "name": "stop-de-palavras",
+  "version": "1.0.0",
+  "description": "Jogo de palavras multiplayer em tempo real, no estilo Tapple, para jogar com os amigos pelo navegador.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stop de Palavras</title>
+<meta name="description" content="Jogo de palavras para jogar com os amigos: uma categoria, uma roda de letras e poucos segundos para pensar.">
+<meta name="theme-color" content="#FFD23F">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛑</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FFD23F;
+  --surface: #FFF7DB;
+  --ink: #221D52;
+  --muted: #5E5888;
+  --edge: #221D52;
+  --accent: #4B2BD6;
+  --accent-ink: #FFFFFF;
+  --key: #FFFFFF;
+  --key-used: #E9DCA6;
+  --danger: #E5383B;
+  --ok: #18915F;
+  --font: "Baloo 2", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1A1740;
+    --surface: #27235C;
+    --ink: #FFF4CC;
+    --muted: #B8B2E8;
+    --edge: #0C0A26;
+    --accent: #FFD23F;
+    --accent-ink: #1A1740;
+    --key: #3A3486;
+    --key-used: #14112F;
+    --danger: #FF5A5F;
+    --ok: #3DDC97;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 1.05rem;
+  line-height: 1.45;
+  padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+}
+[hidden] { display: none !important; }
+h1, h2, p { margin: 0; }
+h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: .6rem; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* ---------- peças base ---------- */
+.panel {
+  background: var(--surface);
+  border: 3px solid var(--edge);
+  border-radius: 20px;
+  box-shadow: 0 6px 0 var(--edge);
+  padding: 1.1rem 1.2rem 1.2rem;
+}
+.btn {
+  appearance: none;
+  border: 3px solid var(--edge);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 4px 0 var(--edge);
+  padding: .55rem 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .06s, box-shadow .06s;
+}
+.btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.big { font-size: 1.2rem; padding: .7rem 1.4rem; }
+.btn.link { border: 0; box-shadow: none; background: none; text-decoration: underline; padding: .3rem; font-weight: 600; color: var(--muted); }
+.field { display: grid; gap: .3rem; font-weight: 600; }
+.input {
+  width: 100%;
+  border: 3px solid var(--edge);
+  border-radius: 12px;
+  background: var(--key);
+  padding: .55rem .8rem;
+  font-weight: 600;
+}
+textarea.input { resize: vertical; min-height: 5.5rem; font-weight: 500; }
+.muted { color: var(--muted); }
+.error { color: var(--danger); font-weight: 700; min-height: 1.4em; }
+.row { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
+
+/* ---------- início ---------- */
+.home { max-width: 34rem; margin: 0 auto; padding: 2.5rem 1.2rem 3rem; display: grid; gap: 1.6rem; }
+.logo { display: grid; gap: .5rem; justify-items: center; }
+.logo-keys { display: flex; gap: .45rem; }
+.logo-key {
+  width: clamp(3.4rem, 17vw, 4.6rem); aspect-ratio: 1;
+  display: grid; place-items: center;
+  background: var(--key); border: 3px solid var(--edge); border-radius: 18px;
+  box-shadow: 0 7px 0 var(--edge);
+  font-size: clamp(2.2rem, 11vw, 3.1rem); font-weight: 800; line-height: 1;
+  padding-top: .2rem;
+}
+.logo-key:nth-child(2) { transform: translateY(6px); box-shadow: 0 1px 0 var(--edge); background: var(--key-used); }
+.logo-sub { font-size: 1.5rem; font-weight: 700; letter-spacing: .02em; }
+.tagline { text-align: center; color: var(--muted); max-width: 26rem; margin: 0 auto; }
+.home form { display: grid; gap: 1rem; }
+.home details summary { cursor: pointer; font-weight: 600; color: var(--muted); }
+.home details .row { margin-top: .6rem; }
+.home details .input { width: 8rem; text-transform: uppercase; letter-spacing: .15em; text-align: center; }
+.invite { font-size: 1.1rem; }
+.invite strong { letter-spacing: .1em; }
+.how p + p { margin-top: .5rem; }
+
+/* ---------- sala de espera ---------- */
+.lobby { max-width: 60rem; margin: 0 auto; padding: 1.6rem 1.2rem 3rem; display: grid; gap: 1.4rem; }
+.room-head { display: flex; justify-content: space-between; align-items: end; gap: 1rem; flex-wrap: wrap; }
+.room-code { font-size: 3rem; font-weight: 800; letter-spacing: .12em; line-height: 1; }
+.lobby-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.4rem; align-items: start; }
+.settings { border: 0; padding: 0; margin: 0 0 1.1rem; display: grid; gap: .9rem; }
+.settings .two { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+.check { display: flex; gap: .55rem; align-items: center; font-weight: 600; cursor: pointer; }
+.check input { width: 1.25rem; height: 1.25rem; accent-color: var(--accent); }
+.plist { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; }
+.plist li {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .45rem .7rem; border-radius: 12px; background: var(--key); border: 2px solid transparent;
+}
+.plist .name { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plist .tag { font-size: .85rem; color: var(--muted); font-weight: 600; }
+.plist li.off { opacity: .5; }
+.plist li.current { border-color: var(--accent); }
+.plist li.out .name { text-decoration: line-through; color: var(--muted); }
+.pips { display: flex; gap: 3px; flex-wrap: wrap; justify-content: flex-end; max-width: 7rem; }
+.pip { width: .7rem; height: .95rem; border-radius: 3px; border: 2px solid var(--edge); }
+.pip.on { background: var(--accent); }
+
+/* ---------- jogo ---------- */
+.game { max-width: 68rem; margin: 0 auto; padding: 1.2rem 1.2rem 3rem; }
+.game-head { display: flex; justify-content: center; margin-bottom: 1.4rem; }
+.card {
+  background: var(--surface); border: 3px solid var(--edge); border-radius: 18px;
+  box-shadow: 0 6px 0 var(--edge);
+  padding: .6rem 1.6rem .7rem; text-align: center; transform: rotate(-1.5deg);
+  max-width: 100%;
+}
+.card .round-label { font-weight: 600; color: var(--muted); font-size: .95rem; }
+.card .category { font-size: clamp(1.6rem, 5vw, 2.4rem); font-weight: 800; line-height: 1.15; }
+.game-grid { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: 1.6rem; align-items: start; }
+.board { display: grid; gap: 1rem; justify-items: center; }
+
+.wheel { position: relative; width: min(92vw, 30rem); aspect-ratio: 1; }
+.wheel::before {
+  content: ""; position: absolute; inset: 6%;
+  border-radius: 50%; background: var(--surface); border: 3px solid var(--edge);
+  box-shadow: 0 8px 0 var(--edge);
+}
+.key {
+  position: absolute; width: 13%; aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  display: grid; place-items: center;
+  background: var(--key); border: 3px solid var(--edge); border-radius: 30%;
+  box-shadow: 0 5px 0 var(--edge);
+  font-weight: 800; font-size: clamp(1rem, 4.4vw, 1.55rem); line-height: 1; padding: .15em 0 0;
+  cursor: default; transition: transform .08s, box-shadow .08s, background .15s;
+}
+.key.free.mine { cursor: pointer; }
+.key.used {
+  background: var(--key-used); color: var(--muted); opacity: .75;
+  transform: translate(-50%, calc(-50% + 4px)); box-shadow: 0 1px 0 var(--edge);
+}
+.key.preview { background: var(--accent); color: var(--accent-ink); }
+.key.preview-bad { background: var(--danger); color: #fff; }
+.hub { position: absolute; inset: 24%; display: grid; place-items: center; }
+.hub svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.hub .track { fill: var(--key); stroke: var(--edge); stroke-width: 3; }
+.hub .ring { fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round; transition: stroke .2s; }
+.hub.danger .ring { stroke: var(--danger); }
+.hub-text { position: relative; text-align: center; display: grid; gap: .1rem; padding: 0 12%; }
+.hub-seconds { font-size: clamp(2.4rem, 11vw, 4rem); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.hub.danger .hub-seconds { color: var(--danger); }
+.hub-name { font-weight: 700; font-size: clamp(.85rem, 3vw, 1.05rem); line-height: 1.15; overflow-wrap: anywhere; }
+
+.status { font-size: 1.15rem; font-weight: 700; text-align: center; min-height: 1.6em; }
+.word-form { display: flex; gap: .6rem; width: min(100%, 30rem); }
+.word-form .input { font-size: 1.25rem; }
+.contest, .vote {
+  width: min(100%, 30rem); background: var(--surface); border: 3px solid var(--edge); border-radius: 16px;
+  padding: .7rem .9rem .9rem; display: grid; gap: .5rem;
+}
+.contest { grid-template-columns: 1fr auto; align-items: center; }
+.contest .bar, .vote .bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--key-used); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); width: 100%; }
+.vote { border-color: var(--danger); box-shadow: 0 5px 0 var(--danger); }
+.vote-text { font-weight: 700; font-size: 1.1rem; }
+.vote-actions { display: flex; gap: .6rem; }
+.vote-actions .btn { flex: 1; }
+.vote-actions .btn.chosen { background: var(--accent); color: var(--accent-ink); }
+.reactions { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: center; }
+.reactions button {
+  font-size: 1.4rem; width: 2.9rem; height: 2.9rem; border-radius: 50%;
+  border: 3px solid var(--edge); background: var(--surface); cursor: pointer; box-shadow: 0 3px 0 var(--edge);
+}
+.reactions button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--edge); }
+
+.side { display: grid; gap: 1.2rem; }
+.log { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; max-height: 18rem; overflow-y: auto; }
+.log li { display: flex; gap: .5rem; align-items: baseline; }
+.log .w { font-weight: 700; }
+.log .by { color: var(--muted); font-size: .9rem; margin-left: auto; white-space: nowrap; }
+.log li.rejected .w { text-decoration: line-through; color: var(--danger); }
+.log-empty { color: var(--muted); }
+
+/* ---------- sobreposição de fim de rodada ---------- */
+.overlay {
+  position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 1.2rem;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+}
+.overlay-card { max-width: 26rem; width: 100%; text-align: center; display: grid; gap: .7rem; animation: pop .35s ease-out; }
+.overlay-card h2 { font-size: 2rem; line-height: 1.15; margin: 0; }
+.rank { list-style: none; padding: 0; margin: .3rem 0; display: grid; gap: .35rem; text-align: left; }
+.rank li { display: flex; justify-content: space-between; font-weight: 700; padding: .35rem .7rem; background: var(--key); border-radius: 10px; }
+@keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---------- avisos e reações ---------- */
+.toasts { position: fixed; left: 50%; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 30; display: grid; gap: .4rem; width: min(92vw, 26rem); pointer-events: none; }
+.toast {
+  background: var(--ink); color: var(--bg); font-weight: 700; padding: .55rem .9rem; border-radius: 12px; text-align: center;
+  animation: toast-in .2s ease-out;
+}
+@keyframes toast-in { from { transform: translateY(10px); opacity: 0; } }
+.float-layer { position: fixed; inset: 0; pointer-events: none; z-index: 25; overflow: hidden; }
+.floater { position: absolute; bottom: 8%; display: grid; justify-items: center; animation: rise 2.4s ease-out forwards; }
+.floater .e { font-size: 2.6rem; }
+.floater .n { font-size: .8rem; font-weight: 700; background: var(--surface); border: 2px solid var(--edge); border-radius: 8px; padding: 0 .4rem; }
+@keyframes rise { 0% { transform: translateY(0); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(-55vh); opacity: 0; } }
+.mute { position: fixed; top: calc(.8rem + env(safe-area-inset-top, 0px)); right: .8rem; z-index: 15; width: 2.8rem; height: 2.8rem; padding: 0; font-size: 1.2rem; border-radius: 50%; }
+.conn { position: fixed; top: 0; left: 0; right: 0; z-index: 40; background: var(--danger); color: #fff; text-align: center; font-weight: 700; padding: .35rem; }
+
+@media (max-width: 860px) {
+  .game-grid, .lobby-grid { grid-template-columns: 1fr; }
+  .side { order: 2; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition: none !important; }
+  .floater { animation: none; opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<div id="conn" class="conn" hidden>Conexão perdida. Tentando reconectar…</div>
+<button id="mute-btn" class="btn mute" type="button" aria-label="Desligar sons">🔊</button>
+
+<!-- ========== INÍCIO ========== -->
+<main id="screen-home" class="home">
+  <h1 class="logo" aria-label="Stop de Palavras">
+    <span class="logo-keys" aria-hidden="true">
+      <span class="logo-key">S</span><span class="logo-key">T</span><span class="logo-key">O</span><span class="logo-key">P</span>
+    </span>
+    <span class="logo-sub" aria-hidden="true">de Palavras</span>
+  </h1>
+  <p class="tagline">Uma categoria, uma roda de letras e poucos segundos para pensar. Cada letra só pode ser usada uma vez.</p>
+
+  <form id="home-form" class="panel" novalidate>
+    <label class="field">Seu apelido
+      <input id="name-input" class="input" maxlength="16" autocomplete="nickname" placeholder="Como seus amigos te chamam">
+    </label>
+
+    <div id="join-box" hidden>
+      <p class="invite">Você foi chamado para a sala <strong id="invite-code"></strong>.</p>
+      <div class="row" style="margin-top:.8rem">
+        <button class="btn primary big" type="submit">Entrar na sala</button>
+        <button class="btn link" type="button" id="create-instead">Criar outra sala</button>
+      </div>
+    </div>
+
+    <div id="create-box">
+      <button class="btn primary big" type="submit" style="width:100%">Criar sala</button>
+      <details style="margin-top:1rem">
+        <summary>Tenho um código de sala</summary>
+        <div class="row">
+          <input id="code-input" class="input" maxlength="4" placeholder="K7XQ" aria-label="Código da sala" autocomplete="off">
+          <button class="btn" type="button" id="join-code-btn">Entrar</button>
+        </div>
+      </details>
+    </div>
+    <p id="home-error" class="error" role="alert"></p>
+  </form>
+
+  <section class="panel how">
+    <h2>Como jogar</h2>
+    <p>Cada rodada sorteia uma categoria. Na sua vez, escreva uma palavra dessa categoria que comece com uma letra ainda livre na roda. A letra fica travada e a vez passa.</p>
+    <p>Se o tempo acabar antes de você responder, você sai da rodada. Achou que a palavra do outro não vale? Conteste, e a sala vota.</p>
+    <p>Quem sobrar por último leva a carta da categoria. Junte cartas suficientes e vença a partida.</p>
+  </section>
+</main>
+
+<!-- ========== SALA DE ESPERA ========== -->
+<main id="screen-lobby" class="lobby" hidden>
+  <header class="room-head">
+    <div>
+      <p class="muted">Código da sala</p>
+      <p id="lobby-code" class="room-code"></p>
+    </div>
+    <div class="row">
+      <button id="copy-link" class="btn primary" type="button">Copiar link do convite</button>
+      <button id="share-link" class="btn" type="button" hidden>Compartilhar</button>
+    </div>
+  </header>
+
+  <div class="lobby-grid">
+    <section class="panel">
+      <h2 id="lobby-count">Jogadores</h2>
+      <ul id="lobby-players" class="plist"></ul>
+    </section>
+
+    <section class="panel">
+      <h2>Regras da partida</h2>
+      <fieldset id="settings" class="settings">
+        <div class="two">
+          <label class="field">Tempo por vez
+            <select id="s-time" class="input">
+              <option value="5">5 segundos</option><option value="7">7 segundos</option>
+              <option value="10">10 segundos</option><option value="12">12 segundos</option>
+              <option value="15">15 segundos</option><option value="20">20 segundos</option>
+            </select>
+          </label>
+          <label class="field">Cartas para vencer
+            <select id="s-target" class="input">
+              <option value="1">1</option><option value="3">3</option><option value="5">5</option>
+              <option value="7">7</option><option value="10">10</option>
+            </select>
+          </label>
+        </div>
+        <label class="check"><input type="checkbox" id="s-accel"> O tempo encurta conforme a roda enche</label>
+        <label class="check"><input type="checkbox" id="s-default"> Usar as categorias prontas</label>
+        <label class="field">Categorias da turma
+          <textarea id="s-custom" class="input" rows="4" placeholder="Uma por linha. Ex.: Coisas que a tia pergunta no Natal"></textarea>
+        </label>
+      </fieldset>
+      <button id="start-btn" class="btn primary big" type="button" style="width:100%">Começar partida</button>
+      <p id="lobby-hint" class="muted" style="margin-top:.6rem;text-align:center"></p>
+      <p id="lobby-error" class="error" role="alert" style="text-align:center"></p>
+    </section>
+  </div>
+</main>
+
+<!-- ========== JOGO ========== -->
+<main id="screen-game" class="game" hidden>
+  <header class="game-head">
+    <div class="card">
+      <p id="round-label" class="round-label"></p>
+      <p id="category" class="category"></p>
+    </div>
+  </header>
+
+  <div class="game-grid">
+    <section class="board">
+      <div id="wheel" class="wheel">
+        <div id="hub" class="hub">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <circle class="track" cx="50" cy="50" r="46"></circle>
+            <circle id="ring" class="ring" cx="50" cy="50" r="46" stroke-dasharray="289.03" stroke-dashoffset="0"></circle>
+          </svg>
+          <div class="hub-text">
+            <span id="hub-seconds" class="hub-seconds"></span>
+            <span id="hub-name" class="hub-name"></span>
+          </div>
+        </div>
+      </div>
+
+      <p id="status" class="status" aria-live="polite"></p>
+
+      <form id="word-form" class="word-form" hidden>
+        <input id="word-input" class="input" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Sua palavra" aria-label="Sua palavra">
+        <button class="btn primary" type="submit">Enviar</button>
+      </form>
+      <p id="word-error" class="error" role="alert"></p>
+
+      <div id="contest" class="contest" hidden>
+        <p><strong id="cw-author"></strong> disse <strong id="cw-word"></strong></p>
+        <button id="contest-btn" class="btn" type="button">Contestar</button>
+        <div class="bar"><i id="cw-bar"></i></div>
+      </div>
+
+      <div id="vote" class="vote" hidden>
+        <p id="vote-text" class="vote-text"></p>
+        <div id="vote-actions" class="vote-actions">
+          <button id="vote-yes" class="btn" type="button">Vale</button>
+          <button id="vote-no" class="btn" type="button">Não vale</button>
+        </div>
+        <p id="vote-tally" class="muted"></p>
+        <div class="bar"><i id="vote-bar"></i></div>
+      </div>
+
+      <div class="reactions" id="reactions" aria-label="Reações"></div>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <h2>Placar</h2>
+        <ul id="game-players" class="plist"></ul>
+        <p id="target-label" class="muted" style="margin-top:.6rem"></p>
+      </section>
+      <section class="panel">
+        <h2>Palavras da rodada</h2>
+        <ol id="word-log" class="log"></ol>
+      </section>
+    </aside>
+  </div>
+
+  <div id="overlay" class="overlay" hidden>
+    <div class="panel overlay-card">
+      <p id="ov-kicker" class="muted"></p>
+      <h2 id="ov-title"></h2>
+      <p id="ov-sub"></p>
+      <ol id="ov-rank" class="rank"></ol>
+      <button id="play-again" class="btn primary big" type="button" hidden>Jogar de novo</button>
+    </div>
+  </div>
+</main>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+<div id="float-layer" class="float-layer"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+  const REACTIONS = ['😂', '😱', '🤔', '👏', '🔥', '🙄'];
+  const RING = 289.03;
+
+  // ---------- armazenamento local ----------
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch {} }
+  };
+  let playerId = store.get('stop.playerId');
+  if (!playerId || !/^[A-Za-z0-9-]{8,64}$/.test(playerId)) {
+    playerId = (crypto.randomUUID ? crypto.randomUUID() : (Math.random().toString(36).slice(2) + Date.now().toString(36)));
+    store.set('stop.playerId', playerId);
+  }
+
+  // ---------- estado ----------
+  const socket = io();
+  let state = null;
+  let offset = 0;
+  let myRoom = null;
+  let muted = store.get('stop.muted') === '1';
+  let lastTick = null;
+  const seen = { notice: null, out: null, result: null, reset: null };
+
+  const match = location.pathname.match(/^\/sala\/([A-Za-z0-9]{4})\/?$/);
+  let inviteCode = match ? match[1].toUpperCase() : null;
+
+  const now = () => Date.now() + offset;
+  const me = () => state && state.players.find(p => p.id === playerId);
+  const nameOf = id => { const p = state && state.players.find(x => x.id === id); return p ? p.name : 'Alguém'; };
+  const isHost = () => state && state.hostId === playerId;
+  const strip = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  function el(tag, props, ...children) {
+    const e = document.createElement(tag);
+    if (props) for (const [k, v] of Object.entries(props)) {
+      if (k === 'class') e.className = v; else if (k === 'text') e.textContent = v; else e.setAttribute(k, v);
+    }
+    for (const c of children) if (c != null) e.append(c);
+    return e;
+  }
+
+  // ---------- sons ----------
+  let audio = null;
+  function beep(freq, dur = .12, type = 'sine', vol = .15, delay = 0) {
+    if (muted) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      const t = audio.currentTime + delay;
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.type = type; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+      o.connect(g).connect(audio.destination); o.start(t); o.stop(t + dur);
+    } catch {}
+  }
+  const sfx = {
+    myTurn() { beep(660, .1, 'triangle'); beep(880, .14, 'triangle', .15, .1); },
+    word() { beep(520, .07, 'square', .06); },
+    tick() { beep(1000, .05, 'square', .05); },
+    out() { beep(180, .35, 'sawtooth', .1); },
+    win() { [523, 659, 784, 1047].forEach((f, i) => beep(f, .18, 'triangle', .14, i * .11)); }
+  };
+  function renderMute() {
+    $('mute-btn').textContent = muted ? '🔇' : '🔊';
+    $('mute-btn').setAttribute('aria-label', muted ? 'Ligar sons' : 'Desligar sons');
+  }
+  $('mute-btn').addEventListener('click', () => { muted = !muted; store.set('stop.muted', muted ? '1' : '0'); renderMute(); });
+  renderMute();
+
+  // ---------- avisos ----------
+  function toast(text) {
+    const t = el('div', { class: 'toast', text });
+    $('toasts').append(t);
+    setTimeout(() => t.remove(), 3200);
+    while ($('toasts').children.length > 3) $('toasts').firstChild.remove();
+  }
+
+  // ---------- telas ----------
+  function show(screen) {
+    for (const s of ['home', 'lobby', 'game']) $('screen-' + s).hidden = s !== screen;
+  }
+
+  // ---------- início ----------
+  $('name-input').value = store.get('stop.name') || '';
+  function renderHome() {
+    $('join-box').hidden = !inviteCode;
+    $('create-box').hidden = !!inviteCode;
+    if (inviteCode) $('invite-code').textContent = inviteCode;
+  }
+  renderHome();
+  show('home');
+
+  function getName() {
+    const n = $('name-input').value.trim();
+    if (!n) { $('home-error').textContent = 'Digite um apelido para continuar.'; $('name-input').focus(); return null; }
+    store.set('stop.name', n);
+    return n;
+  }
+  function enterRoom(res) {
+    if (res && res.error) { $('home-error').textContent = res.error; return; }
+    myRoom = res.code;
+    inviteCode = null;
+    history.replaceState(null, '', '/sala/' + res.code);
+  }
+  function joinRoom(code) {
+    const name = getName(); if (!name) return;
+    $('home-error').textContent = '';
+    socket.emit('join', { code, name, playerId }, enterRoom);
+  }
+  $('home-form').addEventListener('submit', e => {
+    e.preventDefault();
+    if (inviteCode) return joinRoom(inviteCode);
+    const name = getName(); if (!name) return;
+    $('home-error').textContent = '';
+    socket.emit('create', { name, playerId }, enterRoom);
+  });
+  $('join-code-btn').addEventListener('click', () => {
+    const code = $('code-input').value.trim().toUpperCase();
+    if (code.length !== 4) { $('home-error').textContent = 'O código tem 4 caracteres.'; return; }
+    joinRoom(code);
+  });
+  $('code-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('join-code-btn').click(); } });
+  $('create-instead').addEventListener('click', () => { inviteCode = null; history.replaceState(null, '', '/'); renderHome(); });
+
+  // ---------- sala de espera ----------
+  const inviteUrl = () => location.origin + '/sala/' + (state ? state.code : '');
+  $('copy-link').addEventListener('click', async () => {
+    const url = inviteUrl();
+    let ok = false;
+    try { await navigator.clipboard.writeText(url); ok = true; } catch {
+      const ta = el('textarea'); ta.value = url; document.body.append(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch {} ta.remove();
+    }
+    $('copy-link').textContent = ok ? 'Link copiado!' : url;
+    setTimeout(() => { $('copy-link').textContent = 'Copiar link do convite'; }, 2200);
+  });
+  if (navigator.share) {
+    $('share-link').hidden = false;
+    $('share-link').addEventListener('click', () => {
+      navigator.share({ title: 'Stop de Palavras', text: 'Bora jogar Stop de Palavras?', url: inviteUrl() }).catch(() => {});
+    });
+  }
+
+  let settingsTimer = null;
+  function sendSettings() {
+    if (!isHost()) return;
+    socket.emit('settings', {
+      turnSeconds: $('s-time').value,
+      targetScore: $('s-target').value,
+      accelerate: $('s-accel').checked,
+      useDefault: $('s-default').checked,
+      custom: $('s-custom').value.split('\n').map(s => s.trim()).filter(Boolean)
+    }, res => { $('lobby-error').textContent = res && res.error ? res.error : ''; });
+  }
+  ['s-time', 's-target', 's-accel', 's-default'].forEach(id => $(id).addEventListener('change', sendSettings));
+  $('s-custom').addEventListener('input', () => { clearTimeout(settingsTimer); settingsTimer = setTimeout(sendSettings, 600); });
+  $('s-custom').addEventListener('blur', () => { clearTimeout(settingsTimer); sendSettings(); });
+
+  $('start-btn').addEventListener('click', () => {
+    clearTimeout(settingsTimer);
+    sendSettings();
+    socket.emit('start', {}, res => { $('lobby-error').textContent = res && res.error ? res.error : ''; });
+  });
+
+  function setSelect(sel, value) {
+    const v = String(value);
+    if (![...sel.options].some(o => o.value === v)) sel.append(el('option', { value: v, text: v }));
+    sel.value = v;
+  }
+
+  function renderLobby() {
+    const s = state;
+    $('lobby-code').textContent = s.code;
+    const connected = s.players.filter(p => p.connected);
+    $('lobby-count').textContent = `Jogadores (${connected.length})`;
+    const list = $('lobby-players'); list.replaceChildren();
+    for (const p of s.players) {
+      list.append(el('li', { class: p.connected ? '' : 'off' },
+        el('span', { class: 'name', text: p.name }),
+        p.id === s.hostId ? el('span', { class: 'tag', text: '👑 anfitrião' }) : null,
+        p.id === playerId ? el('span', { class: 'tag', text: 'você' }) : null));
+    }
+    const host = isHost();
+    $('settings').disabled = !host;
+    setSelect($('s-time'), s.settings.turnSeconds);
+    setSelect($('s-target'), s.settings.targetScore);
+    $('s-accel').checked = s.settings.accelerate;
+    $('s-default').checked = s.settings.useDefault;
+    if (document.activeElement !== $('s-custom')) {
+      $('s-custom').value = s.settings.custom.join('\n');
+    }
+    $('start-btn').hidden = !host;
+    $('start-btn').disabled = connected.length < 2;
+    $('lobby-hint').textContent = host
+      ? (connected.length < 2 ? 'Mande o link para pelo menos um amigo entrar.' : 'Todo mundo dentro? É só começar.')
+      : `Esperando ${nameOf(s.hostId)} começar a partida.`;
+  }
+
+  // ---------- jogo ----------
+  const keyEls = {};
+  let previewLetter = null;
+  function buildWheel(letters) {
+    if (Object.keys(keyEls).length) return;
+    letters.forEach((L, i) => {
+      const a = (i / letters.length) * Math.PI * 2 - Math.PI / 2;
+      const k = el('button', { class: 'key', type: 'button', text: L, 'aria-label': 'Letra ' + L });
+      k.style.left = (50 + 41 * Math.cos(a)) + '%';
+      k.style.top = (50 + 41 * Math.sin(a)) + '%';
+      k.addEventListener('click', () => {
+        if (!isMyTurn() || (state.round.used[L])) return;
+        const input = $('word-input');
+        if (!input.value.trim()) input.value = L.toLowerCase();
+        input.focus();
+        updatePreview();
+      });
+      $('wheel').append(k);
+      keyEls[L] = k;
+    });
+  }
+  const isMyTurn = () => state && state.phase === 'turn' && state.round && state.round.currentId === playerId;
+
+  function updatePreview() {
+    const v = $('word-input').value.trim();
+    previewLetter = v ? strip(v[0]).toUpperCase() : null;
+    paintKeys();
+  }
+  $('word-input').addEventListener('input', () => { $('word-error').textContent = ''; updatePreview(); });
+
+  function paintKeys() {
+    if (!state || !state.round) return;
+    const used = state.round.used;
+    const mine = isMyTurn();
+    for (const [L, k] of Object.entries(keyEls)) {
+      const u = used[L];
+      k.classList.toggle('used', !!u);
+      k.classList.toggle('free', !u);
+      k.classList.toggle('mine', mine);
+      k.classList.toggle('preview', mine && previewLetter === L && !u);
+      k.classList.toggle('preview-bad', mine && previewLetter === L && !!u);
+      k.title = u ? `${u.word} (${nameOf(u.by)})` : '';
+      k.tabIndex = mine && !u ? 0 : -1;
+    }
+  }
+
+  $('word-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const word = $('word-input').value.trim();
+    if (!word) return;
+    socket.emit('submit', { word }, res => {
+      if (res && res.error) { $('word-error').textContent = res.error; beep(220, .15, 'square', .06); }
+      else { $('word-input').value = ''; previewLetter = null; }
+    });
+  });
+  $('contest-btn').addEventListener('click', () => socket.emit('contest', {}, res => { if (res && res.error) toast(res.error); }));
+  $('vote-yes').addEventListener('click', () => socket.emit('vote', { accept: true }, res => { if (res && res.error) toast(res.error); }));
+  $('vote-no').addEventListener('click', () => socket.emit('vote', { accept: false }, res => { if (res && res.error) toast(res.error); }));
+  $('play-again').addEventListener('click', () => socket.emit('playAgain', {}, res => { if (res && res.error) toast(res.error); }));
+
+  for (const emoji of REACTIONS) {
+    const b = el('button', { type: 'button', text: emoji, 'aria-label': 'Reagir com ' + emoji });
+    b.addEventListener('click', () => socket.emit('react', { emoji }));
+    $('reactions').append(b);
+  }
+  socket.on('reaction', ({ by, emoji }) => {
+    if (!state) return;
+    const f = el('div', { class: 'floater' }, el('span', { class: 'e', text: emoji }), el('span', { class: 'n', text: nameOf(by) }));
+    f.style.left = (10 + Math.random() * 75) + '%';
+    $('float-layer').append(f);
+    setTimeout(() => f.remove(), 2500);
+  });
+
+  function pips(score, target) {
+    const box = el('span', { class: 'pips', 'aria-label': `${score} de ${target} cartas` });
+    for (let i = 0; i < target; i++) box.append(el('span', { class: 'pip' + (i < score ? ' on' : '') }));
+    return box;
+  }
+
+  function renderGame(prev) {
+    const s = state, r = s.round;
+    buildWheel(s.letters);
+    const myTurnNow = isMyTurn();
+    const wasMyTurn = prev && prev.phase === 'turn' && prev.round && prev.round.currentId === playerId;
+
+    if (r) {
+      $('round-label').textContent = `Rodada ${s.roundNumber}`;
+      $('category').textContent = r.category;
+    }
+    $('target-label').textContent = `Quem juntar ${s.settings.targetScore} ${s.settings.targetScore === 1 ? 'carta' : 'cartas'} vence.`;
+
+    // vez de quem
+    $('word-form').hidden = !myTurnNow;
+    if (myTurnNow && !wasMyTurn) {
+      $('word-input').value = ''; $('word-error').textContent = ''; previewLetter = null;
+      $('word-input').focus();
+      sfx.myTurn();
+    }
+    if (!myTurnNow) { $('word-error').textContent = ''; previewLetter = null; }
+
+    const mePlayer = me();
+    let status = '';
+    if (s.phase === 'turn' && r) {
+      if (myTurnNow) status = `Sua vez! Algo de “${r.category}”.`;
+      else if (mePlayer && mePlayer.eliminated) status = `Você está fora desta rodada. Vez de ${nameOf(r.currentId)}.`;
+      else status = `Vez de ${nameOf(r.currentId)}.`;
+    } else if (s.phase === 'vote') status = 'Jogo pausado para votação.';
+    $('status').textContent = status;
+    $('hub-name').textContent = (s.phase === 'turn' && r) ? (myTurnNow ? 'Sua vez' : nameOf(r.currentId)) : (s.phase === 'vote' ? 'Votação' : '');
+
+    // votação
+    const v = r && r.vote;
+    $('vote').hidden = !(s.phase === 'vote' && v);
+    if (s.phase === 'vote' && v) {
+      const iAmAuthor = v.author === playerId;
+      $('vote-text').textContent = iAmAuthor
+        ? `${nameOf(v.contestedBy)} contestou a sua palavra “${v.word}”. A sala está votando.`
+        : `${nameOf(v.contestedBy)} contestou “${v.word}”, de ${nameOf(v.author)}. Vale?`;
+      $('vote-actions').hidden = iAmAuthor;
+      const mine = v.votes[playerId];
+      $('vote-yes').classList.toggle('chosen', mine === true);
+      $('vote-no').classList.toggle('chosen', mine === false);
+      const vals = Object.values(v.votes);
+      const yes = vals.filter(Boolean).length;
+      $('vote-tally').textContent = `${yes} vale, ${vals.length - yes} não vale`;
+    }
+
+    // placar
+    const list = $('game-players'); list.replaceChildren();
+    for (const p of s.players) {
+      const current = r && r.currentId === p.id && s.phase === 'turn';
+      let tag = '';
+      if (!p.connected) tag = 'saiu';
+      else if (current) tag = 'na vez';
+      else if (p.eliminated && (s.phase === 'turn' || s.phase === 'vote')) tag = 'fora';
+      list.append(el('li', { class: [!p.connected && 'off', current && 'current', p.eliminated && (s.phase === 'turn' || s.phase === 'vote') && 'out'].filter(Boolean).join(' ') },
+        el('span', { class: 'name', text: p.name + (p.id === playerId ? ' (você)' : '') }),
+        tag ? el('span', { class: 'tag', text: tag }) : null,
+        pips(p.score, s.settings.targetScore)));
+    }
+
+    // palavras
+    const log = $('word-log'); log.replaceChildren();
+    const words = r ? [...r.words].reverse() : [];
+    if (!words.length) log.append(el('li', { class: 'log-empty', text: 'Nenhuma palavra ainda.' }));
+    for (const w of words) {
+      log.append(el('li', { class: w.status === 'rejeitada' ? 'rejected' : '' },
+        el('span', { class: 'w', text: w.word }),
+        w.status === 'rejeitada' ? el('span', { class: 'tag', text: 'não valeu' }) : null,
+        el('span', { class: 'by', text: nameOf(w.by) })));
+    }
+
+    // fim de rodada / fim de jogo
+    const ov = $('overlay');
+    ov.hidden = !(s.phase === 'roundEnd' || s.phase === 'gameEnd');
+    $('ov-rank').replaceChildren();
+    $('play-again').hidden = true;
+    if (s.phase === 'roundEnd') {
+      $('ov-kicker').textContent = `Fim da rodada ${s.roundNumber}`;
+      $('ov-title').textContent = s.roundWinnerId
+        ? (s.roundWinnerId === playerId ? 'Você levou a carta!' : `${nameOf(s.roundWinnerId)} levou a carta!`)
+        : 'Ninguém levou a carta.';
+    } else if (s.phase === 'gameEnd') {
+      $('ov-kicker').textContent = 'Fim de jogo';
+      $('ov-title').textContent = s.gameWinnerId === playerId ? 'Você venceu! 🏆' : `${nameOf(s.gameWinnerId)} venceu! 🏆`;
+      $('ov-sub').textContent = '';
+      const ranked = [...s.players].sort((a, b) => b.score - a.score);
+      for (const p of ranked) $('ov-rank').append(el('li', {}, el('span', { text: p.name }), el('span', { text: `${p.score} ${p.score === 1 ? 'carta' : 'cartas'}` })));
+      $('play-again').hidden = !isHost();
+      if (!isHost()) $('ov-sub').textContent = `Esperando ${nameOf(s.hostId)} recomeçar.`;
+    }
+
+    // sons e avisos por mudança
+    if (prev && prev.round && r && r.words.length > prev.round.words.length && r.words[r.words.length - 1].by !== playerId) sfx.word();
+    if (r && r.lastOut && r.lastOut.at !== seen.out) {
+      seen.out = r.lastOut.at;
+      const who = r.lastOut.id === playerId ? 'Você' : nameOf(r.lastOut.id);
+      const why = { tempo: 'o tempo acabou', saiu: 'saiu da sala', contestada: 'a palavra não valeu' }[r.lastOut.reason] || '';
+      toast(`${who} ficou fora: ${why}.`);
+      sfx.out();
+    }
+    if (r && r.lastResult && r.lastResult.at !== seen.result) {
+      seen.result = r.lastResult.at;
+      const lr = r.lastResult;
+      if (!lr.rejected) toast(`“${lr.word}” valeu (${lr.yes} a ${lr.no}).`);
+    }
+    if (r && r.resetAt && r.resetAt !== seen.reset) {
+      seen.reset = r.resetAt;
+      toast('Roda completa! As letras voltaram e o tempo ficou mais curto.');
+    }
+    if (prev && prev.phase !== s.phase && (s.phase === 'roundEnd' || s.phase === 'gameEnd') && s.roundWinnerId === playerId) sfx.win();
+
+    paintKeys();
+  }
+
+  // ---------- render geral ----------
+  function render(prev) {
+    const s = state;
+    if (s.notice && s.notice.at !== seen.notice) { seen.notice = s.notice.at; toast(s.notice.text); }
+    if (s.phase === 'lobby') { show('lobby'); renderLobby(); document.title = `Sala ${s.code} | Stop de Palavras`; }
+    else { show('game'); renderGame(prev); document.title = `${s.round ? s.round.category : 'Jogo'} | Stop de Palavras`; }
+  }
+
+  socket.on('state', s => {
+    offset = s.serverNow - Date.now();
+    const prev = state;
+    state = s;
+    render(prev);
+  });
+
+  // ---------- relógio ----------
+  function frame() {
+    requestAnimationFrame(frame);
+    if (!state || state.phase === 'lobby') return;
+    const r = state.round;
+    const t = now();
+    const hub = $('hub');
+
+    if (state.phase === 'turn' && r && r.deadline) {
+      const left = Math.max(0, r.deadline - t);
+      const secs = Math.ceil(left / 1000);
+      $('hub-seconds').textContent = secs;
+      $('ring').setAttribute('stroke-dashoffset', (RING * (1 - left / r.turnTotal)).toFixed(2));
+      hub.classList.toggle('danger', left < 3000);
+      if (isMyTurn() && secs <= 3 && secs > 0 && lastTick !== secs) { lastTick = secs; sfx.tick(); }
+      if (secs > 3) lastTick = null;
+    } else if (state.phase === 'vote' && r && r.vote) {
+      const left = Math.max(0, r.vote.deadline - t);
+      $('hub-seconds').textContent = '⏸';
+      $('ring').setAttribute('stroke-dashoffset', '0');
+      hub.classList.remove('danger');
+      $('vote-bar').style.width = (100 * left / r.vote.total) + '%';
+    } else {
+      $('hub-seconds').textContent = '';
+      hub.classList.remove('danger');
+    }
+
+    // janela para contestar
+    const lw = r && r.lastWord;
+    const open = state.phase === 'turn' && lw && t < lw.contestUntil;
+    $('contest').hidden = !open;
+    if (open) {
+      $('cw-author').textContent = lw.by === playerId ? 'Você' : nameOf(lw.by);
+      $('cw-word').textContent = `“${lw.word}”`;
+      $('contest-btn').hidden = lw.by === playerId;
+      $('cw-bar').style.width = (100 * (lw.contestUntil - t) / r.contestWindow) + '%';
+    }
+
+    if (state.phase === 'roundEnd' && state.nextAt) {
+      const secs = Math.max(0, Math.ceil((state.nextAt - t) / 1000));
+      $('ov-sub').textContent = `Próxima rodada em ${secs}…`;
+    }
+  }
+  requestAnimationFrame(frame);
+
+  // ---------- conexão ----------
+  socket.on('disconnect', () => { $('conn').hidden = false; });
+  socket.on('connect', () => {
+    $('conn').hidden = true;
+    if (myRoom) {
+      socket.emit('join', { code: myRoom, name: store.get('stop.name') || 'Jogador', playerId }, res => {
+        if (res && res.error) {
+          toast(res.error);
+          myRoom = null; state = null;
+          history.replaceState(null, '', '/');
+          renderHome(); show('home');
+        }
+      });
+    }
+  });
+})();
+</script>
+</body>
+</html>
